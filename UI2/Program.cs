@@ -6,7 +6,7 @@ using System.Text;
 
 namespace UI2
 {
-    class Program
+    class Program 
     {
         static void Main(string[] args)
         {
