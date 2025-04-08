@@ -2,7 +2,7 @@
 
 namespace DAL2.Entities
 {
-    public class Storage
+    public class Storage 
     {
         [Key]
         public int Id { get; set; }

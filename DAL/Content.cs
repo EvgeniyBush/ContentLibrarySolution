@@ -2,7 +2,7 @@
 
 namespace DAL2.Entities
 {
-    public abstract class Content
+    public abstract class Content 
     {
         [Key]
         public int Id { get; set; }

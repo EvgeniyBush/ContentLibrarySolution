@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL2
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : DbContext 
     {
         public DbSet<Content> Contents => Set<Content>();
         public DbSet<Book> Books => Set<Book>();

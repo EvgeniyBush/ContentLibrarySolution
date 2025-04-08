@@ -2,7 +2,7 @@
 
 namespace DAL2.Entities
 {
-    public class ContentLocation
+    public class ContentLocation 
     {
         public int Id { get; set; }
 
