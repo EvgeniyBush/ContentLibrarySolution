@@ -2,7 +2,7 @@
 
 namespace BLL2.Factories
 {
-    public class AudioFactory : ContentFactory
+    public class AudioFactory : ContentFactory 
     {
         private readonly string _title;
         private readonly string _artist;

@@ -2,7 +2,7 @@
 
 namespace BLL2.Factories
 {
-    public class BookFactory : ContentFactory
+    public class BookFactory : ContentFactory 
     {
         private readonly string _title;
         private readonly string _author;

@@ -2,7 +2,7 @@
 
 namespace BLL2.Factories
 {
-    public class VideoFactory : ContentFactory
+    public class VideoFactory : ContentFactory 
     {
         private readonly string _title;
         private readonly string _director;

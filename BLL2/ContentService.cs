@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BLL2.Services
 {
-    public class ContentService
+    public class ContentService 
     {
         private readonly AppDbContext _context;
 
