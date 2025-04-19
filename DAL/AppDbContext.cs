@@ -1,4 +1,6 @@
-﻿using DAL2.Entities;
+﻿#pragma warning disable 
+
+using DAL2.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL2

@@ -1,14 +1,18 @@
-﻿using BLL2.Factories;
+﻿#pragma warning disable 
+
+using BLL2.Factories;
 using BLL2.Services;
 using DAL2;
-using DAL2.Entities;
+using DAL2.Repositories;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
+using DAL2.Entities;
 
 namespace UI2
 {
-    class Program 
+    class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
@@ -18,15 +22,14 @@ namespace UI2
                 initContext.Database.EnsureCreated();
             }
 
-
             var context = new AppDbContext();
-            var service = new ContentService(context);
+            var unitOfWork = new UnitOfWork(context);
+            var service = new ContentService(unitOfWork);
 
-            // Додати стартові сховища, якщо порожньо
-            if (!service.GetStorages().Any())
+            if (!(await service.GetStoragesAsync()).Any())
             {
-                service.AddStorage("Головна бібліотека");
-                service.AddStorage("Онлайн архів");
+                await service.AddStorageAsync("Головна бібліотека");
+                await service.AddStorageAsync("Онлайн архів");
             }
 
             while (true)
@@ -47,22 +50,22 @@ namespace UI2
                 switch (choice)
                 {
                     case "1":
-                        ShowAll(service);
+                        await ShowAll(service);
                         break;
                     case "2":
-                        AddContent(service);
+                        await AddContent(service);
                         break;
                     case "3":
-                        Search(service);
+                        await Search(service);
                         break;
                     case "4":
-                        Delete(service);
+                        await Delete(service);
                         break;
                     case "5":
-                        ShowStorages(service);
+                        await ShowStorages(service);
                         break;
                     case "6":
-                        AddStorage(service);
+                        await AddStorage(service);
                         break;
                     case "0":
                         return;
@@ -76,9 +79,9 @@ namespace UI2
             }
         }
 
-        static void ShowAll(ContentService service)
+        static async Task ShowAll(ContentService service)
         {
-            var all = service.GetAll();
+            var all = await service.GetAllAsync();
             Console.WriteLine("Весь контент:");
 
             if (!all.Any())
@@ -94,8 +97,7 @@ namespace UI2
             }
         }
 
-
-        static void AddContent(ContentService service)
+        static async Task AddContent(ContentService service)
         {
             Console.WriteLine("Тип контенту (book/audio/video/document):");
             var type = Console.ReadLine()?.Trim().ToLower();
@@ -112,7 +114,7 @@ namespace UI2
             Console.Write("Формат (наприклад, PDF, MP3...): ");
             var format = Console.ReadLine();
 
-            var storages = service.GetStorages();
+            var storages = await service.GetStoragesAsync();
             if (!storages.Any())
             {
                 Console.WriteLine("Немає доступних сховищ.");
@@ -137,14 +139,13 @@ namespace UI2
                 "audio" => CreateAudioFactory(title!, format!),
                 "video" => CreateVideoFactory(title!, format!),
                 "document" => CreateDocumentFactory(title!, format!),
-                _ => throw new Exception("Невірний тип контенту") // тепер ніколи не трапиться
+                _ => throw new Exception("Невірний тип контенту")
             };
 
             var content = factory.CreateContent();
-            service.AddContent(content, storageId);
+            await service.AddContentAsync(content, storageId);
             Console.WriteLine("Контент додано!");
         }
-
 
         static BookFactory CreateBookFactory(string title, string format)
         {
@@ -182,11 +183,11 @@ namespace UI2
             return new DocumentFactory(title, author!, desc!, format);
         }
 
-        static void Search(ContentService service)
+        static async Task Search(ContentService service)
         {
             Console.Write("Введіть назву для пошуку: ");
             var query = Console.ReadLine();
-            var results = service.SearchByTitle(query!);
+            var results = await service.SearchByTitleAsync(query!);
 
             if (!results.Any())
             {
@@ -200,28 +201,28 @@ namespace UI2
             }
         }
 
-        static void Delete(ContentService service)
+        static async Task Delete(ContentService service)
         {
             Console.Write("ID контенту для видалення: ");
             int id = int.Parse(Console.ReadLine()!);
-            service.Delete(id);
+            await service.DeleteAsync(id);
             Console.WriteLine("Видалено.");
         }
 
-        static void ShowStorages(ContentService service)
+        static async Task ShowStorages(ContentService service)
         {
-            var storages = service.GetStorages();
+            var storages = await service.GetStoragesAsync();
             foreach (var s in storages)
             {
-                Console.WriteLine($"{s.Id}. {s.LocationName} (зберігає {s.ContentLocations.Count} об'єктів)");
+                Console.WriteLine($"{s.Id}. {s.LocationName} (зберігає {s.ContentLocations?.Count ?? 0} об'єктів)");
             }
         }
 
-        static void AddStorage(ContentService service)
+        static async Task AddStorage(ContentService service)
         {
             Console.Write("Назва нового сховища: ");
             var name = Console.ReadLine();
-            service.AddStorage(name!);
+            await service.AddStorageAsync(name!);
             Console.WriteLine("Сховище додано.");
         }
     }

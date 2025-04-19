@@ -1,4 +1,6 @@
-﻿namespace DAL2.Entities
+﻿#pragma warning disable 
+
+namespace DAL2.Entities
 {
     public class Video : Content 
     {

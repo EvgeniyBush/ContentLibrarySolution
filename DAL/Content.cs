@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿#pragma warning disable 
+
+using System.ComponentModel.DataAnnotations;
 
 namespace DAL2.Entities
 {
@@ -12,6 +14,6 @@ namespace DAL2.Entities
 
         public string Format { get; set; } = string.Empty;
 
-        public ContentLocation? Location { get; set; }
+        public virtual  ContentLocation? Location { get; set; }
     }
 }

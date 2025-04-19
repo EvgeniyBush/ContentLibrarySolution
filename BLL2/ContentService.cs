@@ -1,26 +1,29 @@
-﻿using DAL2;
+﻿#pragma warning disable 
+
 using DAL2.Entities;
+using DAL2.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace BLL2.Services
 {
-    public class ContentService 
+    public class ContentService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ContentService(AppDbContext context)
+        public ContentService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // Додавання контенту
-        public void AddContent(Content content, int storageId)
+        public async Task AddContentAsync(Content content, int storageId)
         {
-            var storage = _context.Storages.FirstOrDefault(s => s.Id == storageId);
-            if (storage == null) throw new Exception("Сховище не знайдено");
+            var storage = await _unitOfWork.Storages.GetByIdAsync(storageId);
+            if (storage == null)
+                throw new Exception("Сховище не знайдено");
 
-            _context.Contents.Add(content);
-            _context.SaveChanges(); // Зберігаємо, щоб згенерувався ID
+            await _unitOfWork.Contents.AddAsync(content);
+            await _unitOfWork.CompleteAsync(); // Зберігаємо, щоб згенерувався ID
 
             var location = new ContentLocation
             {
@@ -28,67 +31,78 @@ namespace BLL2.Services
                 StorageId = storage.Id
             };
 
-            _context.ContentLocations.Add(location);
-            _context.SaveChanges();
+            await _unitOfWork.ContentLocations.AddAsync(location);
+            await _unitOfWork.CompleteAsync();
         }
 
-
-        // Отримати всі
-        public List<Content> GetAll()
+        public async Task<List<Content>> GetAllAsync()
         {
-            return _context.Contents.Include(c => c.Location).ThenInclude(l => l.Storage).ToList();
-        }
+            var contents = await _unitOfWork.Contents.GetAllAsync();
+            return contents
+               .Select(c =>
+               {
+                   var location = _unitOfWork
+                       .ContentLocations
+                       .FindAsync(cl => cl.ContentId == c.Id)
+                       .Result
+                       .FirstOrDefault();
 
-        // Пошук по назві
-        public List<Content> SearchByTitle(string title)
-        {
-            return _context.Contents
-                .Where(c => EF.Functions.Like(c.Title, $"%{title}%"))
-                .Include(c => c.Location)
-                .ThenInclude(l => l.Storage)
+                   if (location != null)
+                   {
+                       location.Storage = _unitOfWork.Storages
+                           .GetByIdAsync(location.StorageId)
+                           .Result;
+
+                       c.Location = location;
+                   }
+
+                   return c;
+               })
+
+
                 .ToList();
         }
 
-        // Видалення
-        public void Delete(int id)
+        public async Task<List<Content>> SearchByTitleAsync(string title)
         {
-            var content = _context.Contents.Find(id);
+            var result = await _unitOfWork.Contents.FindAsync(c => EF.Functions.Like(c.Title, $"%{title}%"));
+            return result.ToList();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var content = await _unitOfWork.Contents.GetByIdAsync(id);
             if (content == null) return;
 
-            _context.Contents.Remove(content);
-            _context.SaveChanges();
+            _unitOfWork.Contents.Remove(content);
+            await _unitOfWork.CompleteAsync();
         }
 
-        // Отримання за ID
-        public Content? GetById(int id)
+        public async Task<Content?> GetByIdAsync(int id)
         {
-            return _context.Contents
-                .Include(c => c.Location)
-                .ThenInclude(l => l.Storage)
-                .FirstOrDefault(c => c.Id == id);
+            return await _unitOfWork.Contents.GetByIdAsync(id);
         }
 
-        // Оновлення (наприклад, зміна назви)
-        public void UpdateTitle(int id, string newTitle)
+        public async Task UpdateTitleAsync(int id, string newTitle)
         {
-            var content = _context.Contents.Find(id);
+            var content = await _unitOfWork.Contents.GetByIdAsync(id);
             if (content == null) return;
 
             content.Title = newTitle;
-            _context.SaveChanges();
+            await _unitOfWork.CompleteAsync();
         }
 
-        // Отримання усіх сховищ
-        public List<Storage> GetStorages()
+        public async Task<List<Storage>> GetStoragesAsync()
         {
-            return _context.Storages.Include(s => s.ContentLocations).ToList();
+            var storages = await _unitOfWork.Storages.GetAllAsync();
+            return storages.ToList();
         }
 
-        // Додавання сховища
-        public void AddStorage(string name)
+        public async Task AddStorageAsync(string name)
         {
-            _context.Storages.Add(new Storage { LocationName = name });
-            _context.SaveChanges();
+            var storage = new Storage { LocationName = name };
+            await _unitOfWork.Storages.AddAsync(storage);
+            await _unitOfWork.CompleteAsync();
         }
     }
 }
