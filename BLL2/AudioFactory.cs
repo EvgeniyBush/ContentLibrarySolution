@@ -1,6 +1,6 @@
 ﻿#pragma warning disable 
 
-using DAL2.Entities;
+using BLL2.DTO;
 
 namespace BLL2.Factories
 {
@@ -19,9 +19,9 @@ namespace BLL2.Factories
             _format = format;
         }
 
-        public override Content CreateContent()
+        public override ContentDto CreateContent()
         {
-            return new Audio
+            return new AudioDto
             {
                 Title = _title,
                 Artist = _artist,

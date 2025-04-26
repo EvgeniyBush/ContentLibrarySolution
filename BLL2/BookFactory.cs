@@ -1,10 +1,10 @@
 ﻿#pragma warning disable 
 
-using DAL2.Entities;
+using BLL2.DTO;
 
 namespace BLL2.Factories
 {
-    public class BookFactory : ContentFactory 
+    public class BookFactory : ContentFactory
     {
         private readonly string _title;
         private readonly string _author;
@@ -19,9 +19,9 @@ namespace BLL2.Factories
             _format = format;
         }
 
-        public override Content CreateContent()
+        public override ContentDto CreateContent()
         {
-            return new Book
+            return new BookDto
             {
                 Title = _title,
                 Author = _author,

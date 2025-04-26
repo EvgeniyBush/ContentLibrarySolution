@@ -1,11 +1,11 @@
 ﻿#pragma warning disable 
 
-using DAL2.Entities;
+using BLL2.DTO;
 
 namespace BLL2.Factories
 {
-    public abstract class ContentFactory 
+    public abstract class ContentFactory
     {
-        public abstract Content CreateContent();
+        public abstract ContentDto CreateContent();
     }
 }

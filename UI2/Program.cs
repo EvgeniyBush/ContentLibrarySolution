@@ -7,6 +7,7 @@ using DAL2.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using DAL2.Entities;
+using AutoMapper;
 
 namespace UI2
 {
@@ -17,6 +18,14 @@ namespace UI2
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
+            // Ініціалізація AutoMapper
+            var mapperConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new MappingProfile());
+            });
+            IMapper mapper = mapperConfig.CreateMapper();
+
+            // Ініціалізація БД
             using (var initContext = new AppDbContext())
             {
                 initContext.Database.EnsureCreated();
@@ -24,8 +33,9 @@ namespace UI2
 
             var context = new AppDbContext();
             var unitOfWork = new UnitOfWork(context);
-            var service = new ContentService(unitOfWork);
+            var service = new ContentService(unitOfWork, mapper); // Тепер через DTO
 
+            // Ініціалізація сховищ
             if (!(await service.GetStoragesAsync()).Any())
             {
                 await service.AddStorageAsync("Головна бібліотека");
@@ -92,8 +102,8 @@ namespace UI2
 
             foreach (var item in all)
             {
-                var location = item.Location?.Storage?.LocationName ?? "невідомо";
-                Console.WriteLine($"{item.Id}. {item.Title} ({item.GetType().Name}) - {item.Format}, розташування: {location}");
+                var location = item.Storage?.LocationName ?? "невідомо";
+                Console.WriteLine($"{item.Id}. {item.Title} - {item.Format}, розташування: {location}");
             }
         }
 
@@ -142,8 +152,8 @@ namespace UI2
                 _ => throw new Exception("Невірний тип контенту")
             };
 
-            var content = factory.CreateContent();
-            await service.AddContentAsync(content, storageId);
+            var contentDto = factory.CreateContent(); // Тепер повертає ContentDto
+            await service.AddContentAsync(contentDto, storageId);
             Console.WriteLine("Контент додано!");
         }
 
@@ -152,7 +162,11 @@ namespace UI2
             Console.Write("Автор: ");
             var author = Console.ReadLine();
             Console.Write("Кількість сторінок: ");
-            int pages = int.Parse(Console.ReadLine()!);
+            if (!int.TryParse(Console.ReadLine(), out int pages))
+            {
+                Console.WriteLine("Некоректне число сторінок. Спробуйте ще раз.");
+                pages = 0;
+            }
             return new BookFactory(title, author!, pages, format);
         }
 
@@ -161,7 +175,11 @@ namespace UI2
             Console.Write("Виконавець: ");
             var artist = Console.ReadLine();
             Console.Write("Тривалість (хв): ");
-            double duration = double.Parse(Console.ReadLine()!);
+            if (!double.TryParse(Console.ReadLine(), out double duration))
+            {
+                Console.WriteLine("Некоректна тривалість. Спробуйте ще раз.");
+                duration = 0;
+            }
             return new AudioFactory(title, artist!, duration, format);
         }
 
@@ -170,7 +188,11 @@ namespace UI2
             Console.Write("Режисер: ");
             var director = Console.ReadLine();
             Console.Write("Висота (px): ");
-            int height = int.Parse(Console.ReadLine()!);
+            if (!int.TryParse(Console.ReadLine(), out int height))
+            {
+                Console.WriteLine("Некоректна висота. Спробуйте ще раз.");
+                height = 0;
+            }
             return new VideoFactory(title, director!, height, format);
         }
 
@@ -204,7 +226,11 @@ namespace UI2
         static async Task Delete(ContentService service)
         {
             Console.Write("ID контенту для видалення: ");
-            int id = int.Parse(Console.ReadLine()!);
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("Некоректний ID.");
+                return;
+            }
             await service.DeleteAsync(id);
             Console.WriteLine("Видалено.");
         }
@@ -212,16 +238,27 @@ namespace UI2
         static async Task ShowStorages(ContentService service)
         {
             var storages = await service.GetStoragesAsync();
+            if (!storages.Any())
+            {
+                Console.WriteLine("Немає зареєстрованих сховищ.");
+                return;
+            }
             foreach (var s in storages)
             {
-                Console.WriteLine($"{s.Id}. {s.LocationName} (зберігає {s.ContentLocations?.Count ?? 0} об'єктів)");
+                Console.WriteLine($"{s.Id}. {s.LocationName}"); // Без ContentLocations
             }
         }
+
 
         static async Task AddStorage(ContentService service)
         {
             Console.Write("Назва нового сховища: ");
             var name = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                Console.WriteLine("Назва не може бути порожньою.");
+                return;
+            }
             await service.AddStorageAsync(name!);
             Console.WriteLine("Сховище додано.");
         }
