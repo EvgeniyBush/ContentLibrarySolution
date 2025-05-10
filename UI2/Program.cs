@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using DAL2.Entities;
 using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace UI2
 {
@@ -17,6 +18,17 @@ namespace UI2
         {
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
+
+            // Налаштування DI-контейнера
+            var services = new ServiceCollection()
+                .AddAutoMapper(typeof(MappingProfile)) 
+                .AddScoped<AppDbContext>()            
+                .AddScoped<IUnitOfWork, UnitOfWork>() 
+                .AddScoped<ContentService>()          
+                .BuildServiceProvider();
+
+            // Отримання сервісу через DI
+            var service = services.GetRequiredService<ContentService>();
 
             // Ініціалізація AutoMapper
             var mapperConfig = new MapperConfiguration(mc =>
@@ -33,7 +45,6 @@ namespace UI2
 
             var context = new AppDbContext();
             var unitOfWork = new UnitOfWork(context);
-            var service = new ContentService(unitOfWork, mapper); // Тепер через DTO
 
             // Ініціалізація сховищ
             if (!(await service.GetStoragesAsync()).Any())

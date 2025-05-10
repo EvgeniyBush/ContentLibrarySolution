@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BLL
+namespace Tests
 {
-    public class Class1
+    internal class ContentServiceTests
     {
     }
 }

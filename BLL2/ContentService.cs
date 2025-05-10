@@ -135,7 +135,7 @@ namespace BLL2.Services
             await _unitOfWork.CompleteAsync();
         }
 
-        private async Task AttachStorageInfoAsync(ContentDto contentDto)
+        public async Task AttachStorageInfoAsync(ContentDto contentDto)
         {
             if (contentDto == null) return;
 
@@ -150,7 +150,7 @@ namespace BLL2.Services
             }
         }
 
-        private async Task AttachStorageInfoAsync(List<ContentDto> contentDtos)
+        public async Task AttachStorageInfoAsync(List<ContentDto> contentDtos)
         {
             foreach (var contentDto in contentDtos)
             {
